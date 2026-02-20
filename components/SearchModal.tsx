@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Task, Category } from '../types';
+import { parseLocalDate } from '../utils/dateUtils'; // <- ACTUALIZADO
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tasks
       task.title.toLowerCase().includes(searchLower) ||
       (task.description && task.description.toLowerCase().includes(searchLower))
     );
-  }).slice(0, 5); // Limit results
+  }).slice(0, 5);
 
   const getCategoryColor = (id: string) => {
     const cat = categories.find(c => c.id === id);
@@ -72,15 +73,17 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tasks
             </div>
           )}
 
-          {filteredTasks.map(task => (
+          {filteredTasks.map(task => {
+            const dateLocal = parseLocalDate(task.date); // <- FIX AQUÍ
+            return (
             <div 
               key={task.id}
               onClick={() => { onSelectTask(task); onClose(); }}
               className="px-4 py-3 hover:bg-white hover:shadow-sm cursor-pointer border-l-4 border-transparent hover:border-primary transition-all flex items-center gap-4 group"
             >
               <div className="flex flex-col items-center justify-center w-12 h-12 bg-white rounded-lg border border-gray-100 shadow-sm text-gray-500 group-hover:border-primary/20">
-                <span className="text-[10px] font-bold uppercase">{new Date(task.date).toLocaleString('es-ES', { month: 'short' }).replace('.', '')}</span>
-                <span className="text-lg font-bold text-gray-900">{new Date(task.date).getDate()}</span>
+                <span className="text-[10px] font-bold uppercase">{dateLocal.toLocaleString('es-ES', { month: 'short' }).replace('.', '')}</span>
+                <span className="text-lg font-bold text-gray-900">{dateLocal.getDate()}</span>
               </div>
               
               <div className="flex-1">
@@ -96,7 +99,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tasks
 
               <span className="material-symbols-outlined text-gray-300 group-hover:text-primary">chevron_right</span>
             </div>
-          ))}
+          )})}
         </div>
         
         {filteredTasks.length > 0 && (

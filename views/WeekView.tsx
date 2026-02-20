@@ -1,5 +1,5 @@
 import React from 'react';
-import { getWeekDays, isSameDay, daysShort } from '../utils/dateUtils';
+import { getWeekDays, isSameDay, daysShort, formatDate } from '../utils/dateUtils';
 import { Task, Category } from '../types';
 
 interface WeekViewProps {
@@ -69,7 +69,7 @@ export const WeekView: React.FC<WeekViewProps> = ({ currentDate, tasks, categori
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-7 min-h-full divide-x divide-gray-100">
           {weekDays.map((day) => {
-            const dateStr = day.toISOString().split('T')[0];
+            const dateStr = formatDate(day); // Cambio aplicado aquí
             const rawTasks = tasks.filter(t => t.date === dateStr);
             const dayTasks = sortTasks([...rawTasks]);
             const isToday = isSameDay(day, today);

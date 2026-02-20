@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDaysInMonth, getFirstDayOfMonth, daysShort, isSameDay } from '../utils/dateUtils';
+import { getDaysInMonth, getFirstDayOfMonth, daysShort, isSameDay, formatDate } from '../utils/dateUtils';
 import { Task, Category } from '../types';
 
 interface MonthViewProps {
@@ -60,7 +60,7 @@ export const MonthView: React.FC<MonthViewProps> = ({ currentDate, tasks, catego
         
         {days.map(day => {
           const dateObj = new Date(year, month, day);
-          const dateStr = dateObj.toISOString().split('T')[0];
+          const dateStr = formatDate(dateObj); // Cambio aplicado aquí
           
           // Filter and Sort
           const rawTasks = tasks.filter(t => t.date === dateStr);

@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './services/db';
 import { Task, Category, ViewType } from './types';
-import { months } from './utils/dateUtils';
+import { months, parseLocalDate } from './utils/dateUtils'; // <- ACTUALIZADO
 
-// Components
 import { EventModal } from './components/EventModal';
 import { CategoryModal } from './components/CategoryModal';
 import { SearchModal } from './components/SearchModal';
-
-// Views
 import { MonthView } from './views/MonthView';
 import { DayView } from './views/DayView';
 import { WeekView } from './views/WeekView'; 
@@ -20,17 +17,14 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   
-  // Modals & Sidebars
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Editing state
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedDateForNewTask, setSelectedDateForNewTask] = useState<Date | undefined>(undefined);
   
-  // File Input Ref
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -53,7 +47,7 @@ function App() {
   };
 
   const handleSaveTask = (newTask: Task) => {
-    const saved = db.saveTask(newTask);
+    db.saveTask(newTask);
     refreshData();
   };
 
@@ -84,7 +78,7 @@ function App() {
   };
 
   const handleSaveCategory = (cat: Category) => {
-    const saved = db.saveCategory(cat);
+    db.saveCategory(cat);
     refreshData();
   };
 
@@ -95,14 +89,9 @@ function App() {
     }
   };
 
-  // Backup Handlers
-  const handleExport = () => {
-    db.exportData();
-  };
+  const handleExport = () => db.exportData();
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleImportClick = () => fileInputRef.current?.click();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -117,7 +106,6 @@ function App() {
         alert('Error al importar el archivo.');
       }
     }
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -140,14 +128,13 @@ function App() {
 
   const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
-      setCurrentDate(new Date(e.target.value));
+      setCurrentDate(parseLocalDate(e.target.value)); // <- FIX AQUÍ
     }
   };
 
   return (
     <div className="flex h-screen bg-background-light text-text-main font-sans overflow-hidden">
       
-      {/* Sidebar Navigation */}
       <aside className={`
         fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-100 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static flex flex-col
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -200,7 +187,6 @@ function App() {
               <button 
                 onClick={() => setIsCategoryModalOpen(true)}
                 className="text-gray-400 hover:text-primary transition-colors"
-                title="Gestionar etiquetas"
               >
                 <span className="material-symbols-outlined text-[16px]">settings</span>
               </button>
@@ -217,14 +203,12 @@ function App() {
           </div>
         </div>
           
-        {/* Sidebar Footer - Backup Controls */}
         <div className="p-4 border-t border-gray-100 bg-gray-50/50">
            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">Datos</h4>
            <div className="flex gap-2">
              <button 
                onClick={handleExport}
                className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:text-primary hover:border-primary/30 hover:shadow-sm transition-all"
-               title="Descargar copia de seguridad"
              >
                <span className="material-symbols-outlined text-[16px]">download</span>
                Exportar
@@ -232,7 +216,6 @@ function App() {
              <button 
                onClick={handleImportClick}
                className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:text-primary hover:border-primary/30 hover:shadow-sm transition-all"
-               title="Cargar copia de seguridad"
              >
                <span className="material-symbols-outlined text-[16px]">upload</span>
                Importar
@@ -251,9 +234,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Header */}
         <header className="h-20 border-b border-gray-100 bg-white flex items-center justify-between px-6 z-20 shrink-0">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden p-2 text-gray-500">
@@ -269,7 +250,6 @@ function App() {
                   )}
                   {currentView !== 'insights' && <span className="material-symbols-outlined text-gray-300 text-sm">expand_more</span>}
                 </h2>
-                {/* Invisible Date Picker Overlay */}
                 {currentView !== 'insights' && (
                   <input 
                     type="date" 
@@ -296,7 +276,6 @@ function App() {
             <button 
               onClick={() => setIsSearchModalOpen(true)}
               className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors"
-              title="Buscar (Ctrl+K)"
             >
                <span className="material-symbols-outlined text-[20px]">search</span>
             </button>
@@ -311,7 +290,6 @@ function App() {
           </div>
         </header>
 
-        {/* View Container */}
         <div className="flex-1 overflow-hidden bg-background-light p-4 md:p-6 relative">
           {currentView === 'month' && (
             <MonthView 
@@ -322,7 +300,6 @@ function App() {
               onAddEvent={handleCreateTask}
             />
           )}
-
           {currentView === 'week' && (
             <WeekView 
               currentDate={currentDate} 
@@ -333,7 +310,6 @@ function App() {
               onAddEvent={handleCreateTask}
             />
           )}
-          
           {currentView === 'day' && (
             <DayView 
               currentDate={currentDate} 
@@ -344,12 +320,10 @@ function App() {
               onDeleteTask={handleDeleteTask}
             />
           )}
-
           {currentView === 'insights' && (
             <InsightsView tasks={tasks} categories={categories} />
           )}
 
-           {/* FAB for Mobile */}
            <button 
               onClick={() => handleCreateTask()}
               className="md:hidden absolute bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center z-40 active:scale-90 transition-transform"
@@ -359,12 +333,10 @@ function App() {
         </div>
       </main>
 
-      {/* Overlays */}
       {isSidebarOpen && (
         <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-20 md:hidden"></div>
       )}
 
-      {/* Modals */}
       <EventModal 
         isOpen={isEventModalOpen} 
         onClose={() => setIsEventModalOpen(false)}
@@ -388,8 +360,8 @@ function App() {
         tasks={tasks}
         categories={categories}
         onSelectTask={(task) => {
-          handleDateClick(new Date(task.date)); // Go to that date
-          handleEditTask(task); // Open the task
+          handleDateClick(parseLocalDate(task.date)); // <- FIX AQUÍ
+          handleEditTask(task);
         }}
       />
     </div>

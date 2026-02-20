@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid 
 } from 'recharts';
 import { Task, Category } from '../types';
-import { daysShort } from '../utils/dateUtils';
+import { daysShort, formatDate, parseLocalDate } from '../utils/dateUtils'; // <- ACTUALIZADO
 
 interface InsightsViewProps {
   tasks: Task[];
@@ -12,33 +12,26 @@ interface InsightsViewProps {
 }
 
 export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories }) => {
-  
-  // --- CALCULOS EN TIEMPO REAL ---
-
-  // 1. Datos Generales
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.completed).length;
   const pendingTasks = totalTasks - completedTasks;
   const completionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
-  // 2. Calcular Racha Actual (Current Streak)
   const streak = useMemo(() => {
-    // Obtener fechas únicas de tareas completadas
     const completedDates = [...new Set(
       tasks
         .filter(t => t.completed)
         .map(t => t.date)
-        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime()) // Ordenar descendente (más reciente primero)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
     )];
 
     if (completedDates.length === 0) return 0;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatDate(new Date());
     const yesterdayDate = new Date();
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterday = yesterdayDate.toISOString().split('T')[0];
+    const yesterday = formatDate(yesterdayDate);
 
-    // Si la última tarea no fue hoy ni ayer, la racha es 0
     if (completedDates[0] !== today && completedDates[0] !== yesterday) {
       return 0;
     }
@@ -46,12 +39,10 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
     let currentStreak = 1;
     let currentDateStr = completedDates[0];
 
-    // Iterar para buscar días consecutivos
     for (let i = 1; i < completedDates.length; i++) {
       const prevDateStr = completedDates[i];
-      
-      const curr = new Date(currentDateStr);
-      const prev = new Date(prevDateStr);
+      const curr = parseLocalDate(currentDateStr); // <- FIX AQUÍ
+      const prev = parseLocalDate(prevDateStr); // <- FIX AQUÍ
       
       const diffTime = Math.abs(curr.getTime() - prev.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
@@ -66,11 +57,9 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
     return currentStreak;
   }, [tasks]);
 
-  // 3. Datos por Categoría (Para el Gráfico Circular)
   const categoryData = useMemo(() => {
     return categories.map(cat => {
       const count = tasks.filter(t => t.categoryId === cat.id).length;
-      // Mapeo básico de colores de Tailwind a Hex para Recharts
       let hexColor = '#9ca3af';
       if (cat.color.includes('purple')) hexColor = '#a855f7';
       if (cat.color.includes('blue')) hexColor = '#3b82f6';
@@ -81,17 +70,11 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
       if (cat.color.includes('indigo')) hexColor = '#6366f1';
       if (cat.color.includes('teal')) hexColor = '#2dd4bf';
 
-      return {
-        name: cat.name,
-        value: count,
-        color: hexColor
-      };
+      return { name: cat.name, value: count, color: hexColor };
     }).filter(d => d.value > 0);
   }, [tasks, categories]);
 
-  // 4. Actividad por Día de la Semana (Para el Gráfico de Barras)
   const weeklyActivityData = useMemo(() => {
-    // Inicializar contadores para Dom(0) a Sab(6)
     const activity = Array(7).fill(0).map((_, i) => ({
       name: daysShort[i],
       completed: 0,
@@ -99,16 +82,14 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
     }));
 
     tasks.forEach(task => {
-      const date = new Date(task.date);
-      const dayIndex = date.getDay(); // 0 = Domingo
+      const date = parseLocalDate(task.date); // <- FIX AQUÍ
+      const dayIndex = date.getDay();
       activity[dayIndex].total += 1;
       if (task.completed) {
         activity[dayIndex].completed += 1;
       }
     });
     
-    // Reordenar para que empiece el Lunes (opcional, pero común en ES)
-    // Mover Domingo (índice 0) al final
     const sunday = activity.shift();
     if(sunday) activity.push(sunday);
 
@@ -122,10 +103,7 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
         <p className="text-text-muted">Análisis en tiempo real de tus tareas</p>
       </header>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        
-        {/* Tasa de Completado */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6 relative overflow-hidden">
           <div className="relative w-24 h-24 flex-shrink-0 z-10">
              <ResponsiveContainer width="100%" height="100%">
@@ -156,11 +134,9 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
                {completedTasks > 0 ? '¡Buen trabajo!' : '¡Empieza hoy!'}
             </div>
           </div>
-          {/* Decorative Blob */}
           <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl"></div>
         </div>
 
-        {/* Racha (Streak) */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
           <div className="flex justify-between items-start mb-2 relative z-10">
             <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider">Racha Actual</h3>
@@ -173,11 +149,9 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
           <p className="text-xs text-gray-400 mt-2 relative z-10">
             {streak > 2 ? '¡Estás en llamas! Sigue así.' : 'Completa tareas hoy y mañana para aumentar tu racha.'}
           </p>
-           {/* Decorative Blob */}
            <div className="absolute -right-8 -top-8 w-32 h-32 bg-orange-50 rounded-full blur-2xl"></div>
         </div>
 
-        {/* Pendientes */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between relative overflow-hidden">
            <div className="flex justify-between items-start z-10">
              <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider">Por Hacer</h3>
@@ -189,14 +163,11 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
              <span className="text-4xl font-bold text-gray-900">{pendingTasks}</span>
              <p className="text-sm text-text-muted mt-1">Tareas esperando tu atención</p>
            </div>
-           {/* Decorative Blob */}
            <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-blue-50 rounded-full blur-2xl"></div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Gráfico de Actividad Semanal */}
         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-gray-900">Actividad por Día</h3>
@@ -207,22 +178,9 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyActivityData} barSize={32}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fontSize: 12, fill: '#9ca3af'}} 
-                  dy={10} 
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fontSize: 12, fill: '#9ca3af'}} 
-                />
-                <Tooltip 
-                  cursor={{fill: '#f8f6f8'}}
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}
-                />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} />
+                <Tooltip cursor={{fill: '#f8f6f8'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}} />
                 <Bar dataKey="total" name="Total" fill="#f3f4f6" radius={[4, 4, 4, 4]} stackId="a" />
                 <Bar dataKey="completed" name="Completadas" fill="#ec13c1" radius={[4, 4, 4, 4]} stackId="b" />
               </BarChart>
@@ -230,7 +188,6 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
           </div>
         </div>
 
-        {/* Gráfico de Categorías */}
         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-gray-900">Distribución</h3>
@@ -241,18 +198,8 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
              {categoryData.length > 0 ? (
                <ResponsiveContainer width="100%" height="100%">
                  <PieChart>
-                   <Pie
-                     data={categoryData}
-                     cx="50%"
-                     cy="50%"
-                     innerRadius={60}
-                     outerRadius={80}
-                     paddingAngle={5}
-                     dataKey="value"
-                   >
-                     {categoryData.map((entry, index) => (
-                       <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
-                     ))}
+                   <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                     {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />)}
                    </Pie>
                    <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
                  </PieChart>
@@ -265,7 +212,6 @@ export const InsightsView: React.FC<InsightsViewProps> = ({ tasks, categories })
              )}
           </div>
           
-          {/* Leyenda Personalizada */}
           <div className="flex flex-wrap gap-3 justify-center mt-2">
             {categoryData.slice(0, 4).map((cat, idx) => (
               <div key={idx} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">

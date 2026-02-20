@@ -1,6 +1,6 @@
 import React from 'react';
 import { Task, Category } from '../types';
-import { daysShort, months } from '../utils/dateUtils';
+import { daysShort, months, formatDate } from '../utils/dateUtils';
 
 interface DayViewProps {
   currentDate: Date;
@@ -12,7 +12,7 @@ interface DayViewProps {
 }
 
 export const DayView: React.FC<DayViewProps> = ({ currentDate, tasks, categories, onToggleTask, onEditTask, onDeleteTask }) => {
-  const dateStr = currentDate.toISOString().split('T')[0];
+  const dateStr = formatDate(currentDate); // Cambio aplicado aquí
   const daysTasks = tasks.filter(t => t.date === dateStr);
   
   // Sorting: Time first, then no time

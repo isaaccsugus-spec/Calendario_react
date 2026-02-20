@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Category, Task } from '../types';
+import { formatDate } from '../utils/dateUtils';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -20,16 +21,15 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
   useEffect(() => {
     if (isOpen) {
       if (existingTask) {
-        // Edit Mode
         setTitle(existingTask.title);
         setDate(existingTask.date);
         setTime(existingTask.time || '');
         setCategoryId(existingTask.categoryId);
         setDescription(existingTask.description || '');
       } else {
-        // Create Mode
         setTitle('');
-        setDate(initialDate ? initialDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+        const targetDate = initialDate ? initialDate : new Date();
+        setDate(formatDate(targetDate)); // Usando fecha local
         setTime('');
         setCategoryId(categories.length > 0 ? categories[0].id : '');
         setDescription('');

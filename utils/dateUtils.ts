@@ -51,3 +51,9 @@ export const isSameDay = (d1: Date, d2: Date): boolean => {
     d1.getDate() === d2.getDate()
   );
 };
+
+export const addDays = (date: Date, days: number): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};

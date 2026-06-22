@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './services/db';
 import { Task, Category, ViewType } from './types';
-import { months, parseLocalDate } from './utils/dateUtils'; // <- ACTUALIZADO
+import { months, parseLocalDate } from './utils/dateUtils'; // <- Corregido
 
 import { EventModal } from './components/EventModal';
 import { CategoryModal } from './components/CategoryModal';
@@ -48,6 +48,12 @@ function App() {
 
   const handleSaveTask = (newTask: Task) => {
     db.saveTask(newTask);
+    refreshData();
+  };
+
+  // --- NUEVO: Manejador para guardar múltiples tareas a la vez ---
+  const handleSaveMultipleTasks = (newTasks: Task[]) => {
+    db.saveMultipleTasks(newTasks);
     refreshData();
   };
 
@@ -128,7 +134,7 @@ function App() {
 
   const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
-      setCurrentDate(parseLocalDate(e.target.value)); // <- FIX AQUÍ
+      setCurrentDate(parseLocalDate(e.target.value));
     }
   };
 
@@ -337,10 +343,12 @@ function App() {
         <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-20 md:hidden"></div>
       )}
 
+      {/* --- AÑADIDO: Prop onSaveMultiple pasado al EventModal --- */}
       <EventModal 
         isOpen={isEventModalOpen} 
         onClose={() => setIsEventModalOpen(false)}
         onSave={handleSaveTask}
+        onSaveMultiple={handleSaveMultipleTasks} 
         categories={categories}
         initialDate={selectedDateForNewTask}
         existingTask={editingTask}
@@ -360,7 +368,7 @@ function App() {
         tasks={tasks}
         categories={categories}
         onSelectTask={(task) => {
-          handleDateClick(parseLocalDate(task.date)); // <- FIX AQUÍ
+          handleDateClick(parseLocalDate(task.date));
           handleEditTask(task);
         }}
       />

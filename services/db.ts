@@ -14,9 +14,9 @@ const INITIAL_SETTINGS: UserSettings = {
 
 // Storage Keys - Updated to force fresh state
 const KEYS = {
-  TASKS: 'app_tasks_v2',
-  CATEGORIES: 'app_categories_v2',
-  SETTINGS: 'app_settings_v2'
+  TASKS: 'app_tasks',
+  CATEGORIES: 'app_categories',
+  SETTINGS: 'app_settings'
 };
 
 export const db = {
@@ -35,6 +35,20 @@ export const db = {
     }
     localStorage.setItem(KEYS.TASKS, JSON.stringify(tasks));
     return task;
+  },
+
+  // --- NUEVO: Guarda varias tareas generadas en bucle ---
+  saveMultipleTasks: (newTasks: Task[]) => {
+    const tasks = db.getTasks();
+    newTasks.forEach(newTask => {
+      const existingIndex = tasks.findIndex(t => t.id === newTask.id);
+      if (existingIndex >= 0) {
+        tasks[existingIndex] = newTask;
+      } else {
+        tasks.push(newTask);
+      }
+    });
+    localStorage.setItem(KEYS.TASKS, JSON.stringify(tasks));
   },
 
   deleteTask: (taskId: string) => {
@@ -76,7 +90,6 @@ export const db = {
   },
 
   // --- Backup Functions ---
-  
   exportData: () => {
     const data = {
       tasks: db.getTasks(),
